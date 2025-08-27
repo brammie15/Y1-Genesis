@@ -8,6 +8,9 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using TagLib;
 using Y1_ingester.Models;
+using Y1_ingester.Utils;
+using Y1_ingester.Utils.Services;
+using Y1_ingester.Views;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
 
@@ -15,134 +18,69 @@ namespace Y1_ingester.ViewModels
 {
     internal partial class MainViewModel : ObservableObject
     {
+        private readonly SongLibraryService _songLibrary;
+        private readonly DownloadQueueService _downloadQueue;
+        private readonly RockboxService _rockboxService;
 
-        YoutubeDL ytdl = new();
         public ObservableCollection<SongModel> Songs { get; } = new();
-
-        private readonly string musicFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Music");
-
-        [ObservableProperty]
-        private ObservableCollection<string> rockboxDrives = new();
-
-        [ObservableProperty]
-        private string selectedRockboxDrive = "None";
-
-        [ObservableProperty]
-        private string urlText;
-
-        [ObservableProperty]
-        private ObservableCollection<QueuedSongModel> queuedSongs = new();
-
-        private readonly BlockingCollection<QueuedSongModel> _downloadQueue = new();
-
-        private readonly CancellationTokenSource _cts = new();
-
+        public ObservableCollection<QueuedSongModel> QueuedSongs { get; } = new();
         public ObservableCollection<SongModel> RockboxSongs { get; } = new();
 
-        [ObservableProperty]
-        public bool isRockBoxConnected;
+        [ObservableProperty] private ObservableCollection<string> rockboxDrives = new();
+        [ObservableProperty] private string selectedRockboxDrive = "None";
+        [ObservableProperty] private string urlText;
+        [ObservableProperty] private bool isRockBoxConnected;
 
         public MainViewModel()
         {
-            if (!Directory.Exists(musicFolder))
-                Directory.CreateDirectory(musicFolder);
+            string musicFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Music");
+            _songLibrary = new SongLibraryService(musicFolder);
+            _downloadQueue = new DownloadQueueService(musicFolder);
+            _rockboxService = new RockboxService();
 
-            LoadSongs();
+            _downloadQueue.SongsChanged += () => RefreshSongs();
 
-            Task.Run(() => ProcessQueueAsync(_cts.Token));
+            RefreshSongs();
 
-            var rockboxDrive = RockboxHelper.DetectRockboxDrive();
-            RockboxDrives.Add("None");
-            if (rockboxDrive != null)
+            PropertyChanged += (s, e) =>
             {
-                RockboxDrives.Add(rockboxDrive);
-            }
-            SelectedRockboxDrive = RockboxDrives[0];
-
-            //When selectedrockbox drive changes, load songs from it
-            PropertyChanged += (s, e) => { 
                 if (e.PropertyName == nameof(SelectedRockboxDrive))
                 {
-                    //Check if rockbox is connected
                     IsRockBoxConnected = SelectedRockboxDrive != "None";
-                    if (!IsRockBoxConnected)
-                    {
-                        MessageBox.Show("Rockbox drive disconnected.");
-                    }
-
                     RockboxSongs.Clear();
-
-                    var driveSongs = RockboxHelper.LoadRockboxSongs(SelectedRockboxDrive);
-
-                    foreach (var song in driveSongs)
+                    foreach (var song in _rockboxService.LoadSongs(SelectedRockboxDrive))
                     {
-                        Console.WriteLine("Found song on Rockbox: " + song.Title);
                         RockboxSongs.Add(song);
                     }
                 }
             };
+
+            RefreshDevices();
         }
 
         [RelayCommand]
         private void RefreshSongs()
         {
-            LoadSongs();
-
-            RockboxDrives.Clear();
-            var rockboxDrive = RockboxHelper.DetectRockboxDrive();
-            RockboxDrives.Add("None");
-            if (rockboxDrive != null)
+            Songs.Clear();
+            foreach (var s in _songLibrary.LoadSongs(RockboxSongs))
             {
-                RockboxDrives.Add(rockboxDrive);
+                Songs.Add(s);
             }
         }
-
-        private void LoadSongs()
+        
+        [RelayCommand]
+        private void RefreshDevices()
         {
-            Songs.Clear();
-
-            var files = Directory.GetFiles(musicFolder, "*.mp3", SearchOption.TopDirectoryOnly);
-            foreach (var file in files)
+            RockboxDrives.Clear();
+            foreach (var d in _rockboxService.DetectDrives())
             {
-                try
-                {
-                    var tagFile = TagLib.File.Create(file);
-
-                    BitmapImage albumArt = null;
-                    if (tagFile.Tag.Pictures.Length > 0)
-                    {
-                        using (var ms = new MemoryStream(tagFile.Tag.Pictures[0].Data.Data))
-                        {
-                            albumArt = new BitmapImage();
-                            albumArt.BeginInit();
-                            albumArt.CacheOption = BitmapCacheOption.OnLoad;
-                            albumArt.StreamSource = ms;
-                            albumArt.EndInit();
-                        }
-                    }
-                    Console.WriteLine("Loaded song: " + (tagFile.Tag.Title ?? Path.GetFileNameWithoutExtension(file)));
-                    Console.WriteLine("Is on Rockbox: " + (RockboxSongs.Any(r => r.Title == tagFile.Tag.Title) ? "Yes" : "No"));
-                    var song = new SongModel
-                    {
-                        FilePath = file,
-                        Title = tagFile.Tag.Title ?? Path.GetFileNameWithoutExtension(file),
-                        Artist = tagFile.Tag.FirstPerformer ?? "Unknown",
-                        Album = tagFile.Tag.Album ?? "Unknown",
-                        AlbumArt = albumArt,
-                        Year = tagFile.Tag.Year > 0 ? tagFile.Tag.Year.ToString() : "Unknown",
-                        IsOnRockbox = RockboxSongs.Any(r => r.Title == tagFile.Tag.Title)
-                    };
-
-                    Songs.Add(song);
-                } catch
-                {
-                    // Ignore invalid or corrupted files
-                }
+                RockboxDrives.Add(d);
             }
+            SelectedRockboxDrive = RockboxDrives.First();
         }
 
         [RelayCommand]
-        async private Task DownloadUrl(string url)
+        private void DownloadUrl(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
             {
@@ -150,102 +88,44 @@ namespace Y1_ingester.ViewModels
                 return;
             }
 
-            Console.WriteLine("Downloading...");
-
-            await DownloaddHelper.DownloadTools();
-            ytdl.YoutubeDLPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "yt-dlp.exe");
-            ytdl.FFmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "ffmpeg.exe");
-
-            ytdl.OutputFolder = musicFolder;
-
-            var queuedItem = new QueuedSongModel { Url = url };
-            QueuedSongs.Add(queuedItem);
-
-            _downloadQueue.Add(queuedItem);
+            var item = new QueuedSongModel { Url = url };
+            QueuedSongs.Add(item);
+            _downloadQueue.Enqueue(item);
             UrlText = string.Empty;
-            return;
-        }
-
-        public void Dispose()
-        {
-            _cts.Cancel();
-            _downloadQueue.CompleteAdding();
-        }
-
-        private async Task ProcessQueueAsync(CancellationToken token)
-        {
-            foreach (var queuedItem in _downloadQueue.GetConsumingEnumerable(token))
-            {
-                try
-                {
-                    queuedItem.Status = "Fetching info…";
-
-                    var infoResult = await ytdl.RunVideoDataFetch(queuedItem.Url);
-                    if (!infoResult.Success)
-                    {
-                        queuedItem.Status = "Failed (metadata)";
-                        continue;
-                    }
-
-                    var info = infoResult.Data;
-                    queuedItem.Title = info.Title ?? queuedItem.Url;
-                    queuedItem.Status = "Downloading…";
-
-                    var downloadResult = await ytdl.RunAudioDownload(queuedItem.Url, AudioConversionFormat.Mp3);
-                    if (!downloadResult.Success)
-                    {
-                        queuedItem.Status = "Failed (download)";
-                        continue;
-                    }
-
-                    string downloadedFile = Path.Combine(musicFolder, downloadResult.Data);
-
-                    // Tag file
-                    var tagFile = TagLib.File.Create(downloadedFile);
-                    tagFile.Tag.Title = info.Title ?? Path.GetFileNameWithoutExtension(downloadedFile);
-                    tagFile.Tag.Album = info.Album ?? "Youtube Music";
-                    tagFile.Tag.Performers = !string.IsNullOrEmpty(info.Uploader) ? new[] { info.Uploader } : new[] { "Unknown" };
-                    tagFile.Tag.Year = (uint)(info.UploadDate?.Year ?? DateTime.Now.Year);
-
-                    if (!string.IsNullOrEmpty(info.Thumbnail))
-                    {
-                        using var wc = new System.Net.WebClient();
-                        var imageData = wc.DownloadData(info.Thumbnail);
-                        var pic = new Picture(new ByteVector(imageData));
-                        tagFile.Tag.Pictures = new IPicture[] { pic };
-                    }
-
-                    tagFile.Save();
-
-                    queuedItem.Status = "Completed";
-
-                    Application.Current.Dispatcher.Invoke(LoadSongs);
-                } catch (Exception ex)
-                {
-                    queuedItem.Status = "Failed (" + ex.Message + ")";
-                }
-            }
         }
 
         [RelayCommand]
-        public void UploadSongs()
+        private void UploadSongs()
         {
-            if (!IsRockBoxConnected || SelectedRockboxDrive == "None")
+            if (!IsRockBoxConnected)
             {
                 MessageBox.Show("No Rockbox drive selected.");
                 return;
             }
-            List<string> fileNames = new();
-            foreach (var song in Songs)
-            {
-                if (!song.IsOnRockbox)
-                {
-                    fileNames.Add(song.FilePath);
-                }
-            }
-            RockboxHelper.UploadMultipleMp3(SelectedRockboxDrive, fileNames);
-            Console.WriteLine("Uploaded " + fileNames.Count + " songs to Rockbox.");
+            var notOnRockbox = Songs.Where(s => !s.IsOnRockbox);
+            _rockboxService.UploadSongs(SelectedRockboxDrive, notOnRockbox);
         }
 
+        [RelayCommand]
+        private void DeleteSong(SongModel song)
+        {
+            if (song == null) return;
+
+            _songLibrary.DeleteSong(song);
+
+            Songs.Remove(song);
+        }
+
+        [RelayCommand]
+        private void EditSong(SongModel song)
+        {
+            if (song == null) return;
+
+            var editor = new MetadataEditorWindow(song);
+            if (editor.ShowDialog() == true)
+            {
+                RefreshSongs();
+            }
+        }
     }
 }

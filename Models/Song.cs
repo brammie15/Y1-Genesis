@@ -25,5 +25,9 @@ namespace Y1_ingester.Models
         private bool isOnRockbox;
         public Brush BorderColor => IsOnRockbox ? Brushes.Green : Brushes.Black;
         public BitmapImage AlbumArt { get; set; }
+
+        ~SongModel() {
+            AlbumArt = null;
+        }
     }
 }

@@ -40,6 +40,7 @@ namespace Y1_ingester.Utils.Services
                         albumArt.CacheOption = BitmapCacheOption.OnLoad;
                         albumArt.StreamSource = ms;
                         albumArt.EndInit();
+                        albumArt.Freeze();
                     }
 
                     var song = new SongModel
@@ -58,6 +59,14 @@ namespace Y1_ingester.Utils.Services
             }
 
             return songs;
+        }
+
+        public void DeleteSong(SongModel song)
+        {
+            if (File.Exists(song.FilePath))
+            {
+                File.Delete(song.FilePath);
+            }
         }
     }
 }
