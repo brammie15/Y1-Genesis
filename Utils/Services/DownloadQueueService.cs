@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TagLib;
+using TagLib.Ape;
 using Y1_ingester.Models;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
@@ -32,6 +33,27 @@ namespace Y1_ingester.Utils
             };
 
             Task.Run(() => ProcessQueueAsync(_cts.Token));
+        }
+
+        public async Task<List<string>> CheckForPlaylist(string url)
+        {
+            var infoResult = await _ytdl.RunVideoDataFetch(url);
+            if (!infoResult.Success)
+            {
+                Console.WriteLine("Failed to fetch video data: " + infoResult.ToString());
+                return [];
+            }
+
+            var info = infoResult.Data;
+            if (info.Entries != null && info.Entries.Length > 0)
+            {
+                Console.WriteLine($"Playlist detected with {info.Entries.Length} entries.");
+                return info.Entries.Select(e => e.Url).Where(u => !string.IsNullOrEmpty(u)).ToList()!;
+            } else
+            {
+                Console.WriteLine($"Regular video detected.");
+                return [];
+            }
         }
 
         public void Enqueue(QueuedSongModel song) => _queue.Add(song);
@@ -83,7 +105,10 @@ namespace Y1_ingester.Utils
                     tagFile.Save();
 
                     item.Status = "Completed";
-                    SongsChanged?.Invoke();
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        SongsChanged?.Invoke();
+                    });
                 } catch (Exception ex)
                 {
                     item.Status = "Failed (" + ex.Message + ")";

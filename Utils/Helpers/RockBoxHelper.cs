@@ -28,7 +28,6 @@ namespace Y1_ingester
             return null;
         }
 
-        // Upload an MP3 file to the Music folder
         public static bool UploadMp3(string driveRoot, string sourceFilePath)
         {
             if (!File.Exists(sourceFilePath))
@@ -54,7 +53,6 @@ namespace Y1_ingester
             }
         }
 
-        // Optional: Upload multiple MP3s at once
         public static int UploadMultipleMp3(string driveRoot, IEnumerable<string> mp3Files)
         {
             int successCount = 0;

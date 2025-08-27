@@ -3,8 +3,11 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media.Imaging;
 using TagLib;
 using Y1_ingester.Models;
@@ -31,6 +34,13 @@ namespace Y1_ingester.ViewModels
         [ObservableProperty] private string urlText;
         [ObservableProperty] private bool isRockBoxConnected;
 
+        public List<string> FilterOptions { get; } = new() { "All", "Only Local", "Only On Rockbox" };
+
+        [ObservableProperty]
+        public string selectedFilter = "All";
+
+        public ICollectionView SongsView { get; }
+
         public MainViewModel()
         {
             string musicFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Music");
@@ -40,22 +50,45 @@ namespace Y1_ingester.ViewModels
 
             _downloadQueue.SongsChanged += () => RefreshSongs();
 
+            RefreshDevices();
             RefreshSongs();
+
+            SongsView = CollectionViewSource.GetDefaultView(Songs);
+            SongsView.Filter = FilterSongs;
 
             PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(SelectedRockboxDrive))
                 {
-                    IsRockBoxConnected = SelectedRockboxDrive != "None";
-                    RockboxSongs.Clear();
-                    foreach (var song in _rockboxService.LoadSongs(SelectedRockboxDrive))
-                    {
-                        RockboxSongs.Add(song);
-                    }
+                    UpdateRockBox();
+                }
+                else if (e.PropertyName == nameof(SelectedFilter))
+                {
+                    SongsView?.Refresh();
                 }
             };
+        }
 
-            RefreshDevices();
+        private bool FilterSongs(object obj)
+        {
+            if (obj is not SongModel song) return false;
+
+            return SelectedFilter switch
+            {
+                "Only Local" => !song.IsOnRockbox,
+                "Only On Rockbox" => song.IsOnRockbox,
+                _ => true, // "All"
+            };
+        }
+
+        private void UpdateRockBox()
+        {
+            IsRockBoxConnected = SelectedRockboxDrive != "None";
+            RockboxSongs.Clear();
+            foreach (var song in _rockboxService.LoadSongs(SelectedRockboxDrive))
+            {
+                RockboxSongs.Add(song);
+            }
         }
 
         [RelayCommand]
@@ -76,11 +109,20 @@ namespace Y1_ingester.ViewModels
             {
                 RockboxDrives.Add(d);
             }
-            SelectedRockboxDrive = RockboxDrives.First();
+
+            if(RockboxDrives.Count > 1)
+            {
+                Console.WriteLine("Found RockBox device: " + RockboxDrives[1]);
+                SelectedRockboxDrive = RockboxDrives[1];
+                UpdateRockBox();
+            } else
+            {
+                SelectedRockboxDrive = RockboxDrives.First();
+            }
         }
 
         [RelayCommand]
-        private void DownloadUrl(string url)
+        private async void DownloadUrl(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
             {
@@ -88,10 +130,28 @@ namespace Y1_ingester.ViewModels
                 return;
             }
 
-            var item = new QueuedSongModel { Url = url };
-            QueuedSongs.Add(item);
-            _downloadQueue.Enqueue(item);
-            UrlText = string.Empty;
+            var isPlaylist = await _downloadQueue.CheckForPlaylist(url);
+            if(isPlaylist.Count > 0)
+            {
+                var result = MessageBox.Show($"Playlist detected with {isPlaylist.Count} entries. Add all to download queue?", "Playlist Detected", MessageBoxButton.YesNo);
+                if(result == MessageBoxResult.Yes)
+                {
+                    foreach(var entry in isPlaylist)
+                    {
+                        Console.WriteLine("Adding to queue: " + entry);
+                        var item = new QueuedSongModel { Url = entry };
+                        QueuedSongs.Add(item);
+                        _downloadQueue.Enqueue(item);
+                    }
+                    UrlText = string.Empty;
+                }
+                return;
+            } else {
+                var item = new QueuedSongModel { Url = url };
+                QueuedSongs.Add(item);
+                _downloadQueue.Enqueue(item);
+                UrlText = string.Empty;
+            }
         }
 
         [RelayCommand]
@@ -126,6 +186,29 @@ namespace Y1_ingester.ViewModels
             {
                 RefreshSongs();
             }
+        }
+
+        [RelayCommand]
+        private void HardSync() { 
+            if (!IsRockBoxConnected)
+            {
+                MessageBox.Show("No Rockbox drive selected.");
+                return;
+            }
+
+            var result = MessageBox.Show("This will delete any songs on the Rockbox device that are not in the local library. Continue?", "Confirm Hard Sync", MessageBoxButton.YesNo);
+            if (result == MessageBoxResult.Yes)
+            {
+                _rockboxService.HardSync(SelectedRockboxDrive, Songs);
+                UpdateRockBox();
+                SongsView.Refresh();
+            }
+        }
+
+        [RelayCommand]
+        private void OpenIssues() {
+            string url = "https://github.com/brammie15/Y1-Genesis/issues";
+            Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
         }
     }
 }

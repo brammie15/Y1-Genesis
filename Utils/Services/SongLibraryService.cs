@@ -51,7 +51,8 @@ namespace Y1_ingester.Utils.Services
                         Album = tagFile.Tag.Album ?? "Unknown",
                         AlbumArt = albumArt,
                         Year = tagFile.Tag.Year > 0 ? tagFile.Tag.Year.ToString() : "Unknown",
-                        IsOnRockbox = rockboxSongs.Any(r => r.Title == tagFile.Tag.Title)
+                        IsOnRockbox = rockboxSongs.Any(r => r.Title == tagFile.Tag.Title),
+                        IsLocal = true
                     };
 
                     songs.Add(song);

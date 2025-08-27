@@ -13,7 +13,7 @@ namespace Y1_ingester.Models
 {
     public partial class SongModel: ObservableObject
     {
-        public string FilePath { get; set; }
+        public required string FilePath { get; set; }
         public string Title { get; set; }
         public string Artist { get; set; }
         public string Album { get; set; }
@@ -23,6 +23,9 @@ namespace Y1_ingester.Models
 
         [ObservableProperty]
         private bool isOnRockbox;
+
+        [ObservableProperty]
+        private bool isLocal;
         public Brush BorderColor => IsOnRockbox ? Brushes.Green : Brushes.Black;
         public BitmapImage AlbumArt { get; set; }
 
