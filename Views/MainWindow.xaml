@@ -8,18 +8,36 @@
         mc:Ignorable="d"
         Title="Y1-Genesis - Brammie15" Height="600" Width="950">
 
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--<ResourceDictionary Source="/Themes/DarkTheme.xaml"/>-->
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Window.DataContext>
         <viewModels:MainViewModel />
     </Window.DataContext>
     <DockPanel>
-        <!-- Top Toolbar -->
-        <ToolBar DockPanel.Dock="Top">
-            <Button Content="Settings" />
-            <Button Content="Refresh" Command="{Binding RefreshSongsCommand}" />
-            <Button Content="Rescan Devices" Command="{Binding RefreshDevicesCommand}" />
-            <Button Content="Hard Sync" Command="{Binding HardSyncCommand}"/>
-            <Button Content="Help / Issues" Command="{Binding OpenIssuesCommand}"/>
-        </ToolBar>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="Settings" Command="{Binding OpenSettingsCommand}" />
+                <Separator/>
+                <MenuItem Header="Exit" Command="ApplicationCommands.Close"/>
+            </MenuItem>
+
+            <MenuItem Header="_Actions">
+                <MenuItem Header="Refresh" Command="{Binding RefreshSongsCommand}" />
+                <MenuItem Header="Rescan Devices" Command="{Binding RefreshDevicesCommand}" />
+                <MenuItem Header="Hard Sync" Command="{Binding HardSyncCommand}" />
+            </MenuItem>
+
+            <MenuItem Header="_Help">
+                <MenuItem Header="Help / Issues" Command="{Binding OpenIssuesCommand}" />
+                <MenuItem Header="About..." />
+            </MenuItem>
+        </Menu>
 
         <!-- Main Content Area -->
         <Grid>
@@ -32,10 +50,13 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-
+            
             <StackPanel Orientation="Horizontal" Margin="10" DockPanel.Dock="Top" Grid.Row="1">
                 <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                 <ComboBox Width="150" ItemsSource="{Binding FilterOptions}" SelectedItem="{Binding SelectedFilter}" />
+
+                <TextBlock Text="Sort by:" VerticalAlignment="Center" Margin="20,0,5,0"/>
+                <ComboBox Width="150" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSort}" />
             </StackPanel>
 
             <!-- Left Side: Song List -->

@@ -39,6 +39,11 @@ namespace Y1_ingester.ViewModels
         [ObservableProperty]
         public string selectedFilter = "All";
 
+        public List<string> SortOptions { get; } = new() { "Title", "Artist", "Album", "Year" };
+
+        [ObservableProperty]
+        private string selectedSort = "Title";
+
         public ICollectionView SongsView { get; }
 
         public MainViewModel()
@@ -65,6 +70,9 @@ namespace Y1_ingester.ViewModels
                 else if (e.PropertyName == nameof(SelectedFilter))
                 {
                     SongsView?.Refresh();
+                } else if (e.PropertyName == nameof(SelectedSort))
+                {
+                    ApplySorting();
                 }
             };
         }
@@ -79,6 +87,18 @@ namespace Y1_ingester.ViewModels
                 "Only On Rockbox" => song.IsOnRockbox,
                 _ => true, // "All"
             };
+        }
+
+        private void ApplySorting()
+        {
+            if (SongsView == null) return;
+
+            SongsView.SortDescriptions.Clear();
+
+            if (!string.IsNullOrEmpty(SelectedSort))
+            {
+                SongsView.SortDescriptions.Add(new SortDescription(SelectedSort, ListSortDirection.Ascending));
+            }
         }
 
         private void UpdateRockBox()
@@ -130,16 +150,20 @@ namespace Y1_ingester.ViewModels
                 return;
             }
 
-            var isPlaylist = await _downloadQueue.CheckForPlaylist(url);
-            if(isPlaylist.Count > 0)
+            var playlist = await _downloadQueue.CheckForPlaylist(url);
+            if(playlist.IsPlaylist)
             {
-                var result = MessageBox.Show($"Playlist detected with {isPlaylist.Count} entries. Add all to download queue?", "Playlist Detected", MessageBoxButton.YesNo);
+                var result = MessageBox.Show($"Playlist detected with {playlist.VideoUrls.Count} entries. Add all to download queue?", "Playlist Detected", MessageBoxButton.YesNo);
                 if(result == MessageBoxResult.Yes)
                 {
-                    foreach(var entry in isPlaylist)
+                    int songIndex = 1;
+                    foreach(var entry in playlist.VideoUrls)
                     {
                         Console.WriteLine("Adding to queue: " + entry);
-                        var item = new QueuedSongModel { Url = entry };
+                        var item = new QueuedSongModel { 
+                            Url = entry,
+                            Filter = $"{playlist.Name}/{songIndex++}. [TITLE].[EXT]"
+                        };
                         QueuedSongs.Add(item);
                         _downloadQueue.Enqueue(item);
                     }

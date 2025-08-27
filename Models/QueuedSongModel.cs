@@ -12,6 +12,10 @@ namespace Y1_ingester.Models
         [ObservableProperty]
         private string url;
 
+        //Filter for filename such as "1.[TITLE].ext"
+        [ObservableProperty]
+        private string filter = "";
+
         [ObservableProperty]
         private string title = "Pending…";
 

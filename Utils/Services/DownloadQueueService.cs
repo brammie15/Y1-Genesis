@@ -35,24 +35,38 @@ namespace Y1_ingester.Utils
             Task.Run(() => ProcessQueueAsync(_cts.Token));
         }
 
-        public async Task<List<string>> CheckForPlaylist(string url)
+        public struct PlaylistCheckResult
+        {
+            public bool IsPlaylist => VideoUrls != null && VideoUrls.Count > 0;
+            public string Name { get; set; }
+            public List<string> VideoUrls = [];
+
+            public PlaylistCheckResult(string playlistName, List<string> videoUrls)
+            {
+                Name = playlistName;
+                VideoUrls = videoUrls;
+            }
+        }
+        public async Task<PlaylistCheckResult> CheckForPlaylist(string url)
         {
             var infoResult = await _ytdl.RunVideoDataFetch(url);
             if (!infoResult.Success)
             {
                 Console.WriteLine("Failed to fetch video data: " + infoResult.ToString());
-                return [];
+                return new PlaylistCheckResult("", []);
             }
 
             var info = infoResult.Data;
             if (info.Entries != null && info.Entries.Length > 0)
             {
                 Console.WriteLine($"Playlist detected with {info.Entries.Length} entries.");
-                return info.Entries.Select(e => e.Url).Where(u => !string.IsNullOrEmpty(u)).ToList()!;
+                var playlistName = info.Title ?? "Unnamed Playlist";
+                var videoUrls = info.Entries.Select(e => e.Url).Where(u => !string.IsNullOrEmpty(u)).ToList()!;
+                return new PlaylistCheckResult(playlistName, videoUrls);
             } else
             {
                 Console.WriteLine($"Regular video detected.");
-                return [];
+                return new PlaylistCheckResult("", []);
             }
         }
 
@@ -94,6 +108,7 @@ namespace Y1_ingester.Utils
 
                     tagFile.Tag.Genres = info.Tags?.ToArray() ?? new[] { "" };
                     tagFile.Tag.Comment = "Hello World!: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    tagFile.Tag.Copyright = "Downloaded via Y1-ingester";
 
                     if (!string.IsNullOrEmpty(info.Thumbnail))
                     {
@@ -103,6 +118,38 @@ namespace Y1_ingester.Utils
                         tagFile.Tag.Pictures = new IPicture[] { pic };
                     }
                     tagFile.Save();
+
+
+                    var filter = item.Filter;
+                    if (!string.IsNullOrEmpty(filter))
+                    {
+                        // e.g. "Superepik/[TITLE].[EXT]"
+                        var newFileName = filter.Replace("[TITLE]", tagFile.Tag.Title ?? "Unknown")
+                                               .Replace("[ARTIST]", tagFile.Tag.Performers.Length > 0 ? tagFile.Tag.Performers[0] : "Unknown")
+                                               .Replace("[ALBUM]", tagFile.Tag.Album ?? "Unknown")
+                                               .Replace("[YEAR]", tagFile.Tag.Year != 0 ? tagFile.Tag.Year.ToString() : "Unknown")
+                                               .Replace("[EXT]", Path.GetExtension(file).TrimStart('.'));
+
+                        newFileName = SanitizeFileName(newFileName);
+
+                        var newFilePath = Path.Combine(_musicFolder, newFileName);
+
+                        var newDir = Path.GetDirectoryName(newFilePath);
+                        if (!string.IsNullOrEmpty(newDir) && !Directory.Exists(newDir))
+                        {
+                            Directory.CreateDirectory(newDir);
+                        }
+
+                        if (!string.Equals(file, newFilePath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (System.IO.File.Exists(newFilePath))
+                            {
+                                System.IO.File.Delete(newFilePath);
+                            }
+                            System.IO.File.Move(file, newFilePath);
+                            file = newFilePath;
+                        }
+                    }
 
                     item.Status = "Completed";
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -120,6 +167,15 @@ namespace Y1_ingester.Utils
         {
             _cts.Cancel();
             _queue.CompleteAdding();
+        }
+        
+        private static string SanitizeFileName(string fileName)
+        {
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                fileName = fileName.Replace(c, '_'); // or remove instead of replace
+            }
+            return fileName;
         }
     }
 }
