@@ -23,7 +23,7 @@ namespace Y1_ingester.Utils.Services
         public IEnumerable<SongModel> LoadSongs(IEnumerable<SongModel> rockboxSongs)
         {
             var songs = new List<SongModel>();
-            var files = Directory.GetFiles(_musicFolder, "*.mp3", SearchOption.TopDirectoryOnly);
+            var files = Directory.GetFiles(_musicFolder, "*.mp3", SearchOption.AllDirectories);
 
             foreach (var file in files)
             {

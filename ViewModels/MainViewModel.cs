@@ -142,7 +142,7 @@ namespace Y1_ingester.ViewModels
         }
 
         [RelayCommand]
-        private async void DownloadUrl(string url)
+        private async Task DownloadUrl(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
             {
@@ -156,13 +156,14 @@ namespace Y1_ingester.ViewModels
                 var result = MessageBox.Show($"Playlist detected with {playlist.VideoUrls.Count} entries. Add all to download queue?", "Playlist Detected", MessageBoxButton.YesNo);
                 if(result == MessageBoxResult.Yes)
                 {
+                    Console.WriteLine($"Adding playlist '{playlist.Name}' with {playlist.VideoUrls.Count} entries to queue.");
                     int songIndex = 1;
                     foreach(var entry in playlist.VideoUrls)
                     {
                         Console.WriteLine("Adding to queue: " + entry);
                         var item = new QueuedSongModel { 
                             Url = entry,
-                            Filter = $"{playlist.Name}/{songIndex++}. [TITLE].[EXT]"
+                            Filter = $"{playlist.Name}/{songIndex++}.[TITLE].[EXT]"
                         };
                         QueuedSongs.Add(item);
                         _downloadQueue.Enqueue(item);

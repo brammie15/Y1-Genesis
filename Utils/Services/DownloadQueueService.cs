@@ -120,17 +120,24 @@ namespace Y1_ingester.Utils
                     tagFile.Save();
 
 
+                    //TODO: messy, needs to be redone
                     var filter = item.Filter;
                     if (!string.IsNullOrEmpty(filter))
                     {
-                        // e.g. "Superepik/[TITLE].[EXT]"
                         var newFileName = filter.Replace("[TITLE]", tagFile.Tag.Title ?? "Unknown")
-                                               .Replace("[ARTIST]", tagFile.Tag.Performers.Length > 0 ? tagFile.Tag.Performers[0] : "Unknown")
-                                               .Replace("[ALBUM]", tagFile.Tag.Album ?? "Unknown")
-                                               .Replace("[YEAR]", tagFile.Tag.Year != 0 ? tagFile.Tag.Year.ToString() : "Unknown")
-                                               .Replace("[EXT]", Path.GetExtension(file).TrimStart('.'));
+                                                .Replace("[ARTIST]", tagFile.Tag.Performers.Length > 0 ? tagFile.Tag.Performers[0] : "Unknown")
+                                                .Replace("[ALBUM]", tagFile.Tag.Album ?? "Unknown")
+                                                .Replace("[YEAR]", tagFile.Tag.Year != 0 ? tagFile.Tag.Year.ToString() : "Unknown")
+                                                .Replace("[EXT]", Path.GetExtension(file).TrimStart('.'));
 
-                        newFileName = SanitizeFileName(newFileName);
+                        var parts = newFileName.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                        for (int i = 0; i < parts.Length; i++)
+                        {
+                            parts[i] = SanitizeFileName(parts[i]);
+                        }
+                        newFileName = Path.Combine(parts);
+
+                        Console.WriteLine("Renaming to: " + newFileName);
 
                         var newFilePath = Path.Combine(_musicFolder, newFileName);
 
