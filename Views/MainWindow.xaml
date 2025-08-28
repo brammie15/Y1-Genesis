@@ -120,7 +120,7 @@
                 <TextBlock Text="Add Song from URL:"/>
                 <TextBox Name="UrlInput" Width="200" Margin="0,10,0,10" Text="{Binding UrlText, UpdateSourceTrigger=PropertyChanged}"/>
                 
-                <Button Content="Download and Add" Width="150" Margin="0,0,0,20" Command="{Binding DownloadUrlCommand}" CommandParameter="{Binding ElementName=UrlInput, Path=Text}"/>
+                <Button Content="Download and Add" Width="160" Margin="0,0,0,20" Command="{Binding DownloadUrlCommand}" CommandParameter="{Binding ElementName=UrlInput, Path=Text}"/>
 
                 <ListBox ItemsSource="{Binding QueuedSongs}" Margin="0,10,0,0" MinHeight="20">
                     <ListBox.ItemTemplate>
