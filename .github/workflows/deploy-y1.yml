@@ -3,7 +3,7 @@ name: "Deploy Y1-Genesis"
 on:
   push:
     branches:
-      - main
+      - master
   
 env:
   PROJECT_PATH: ./Y1-ingester.sln
