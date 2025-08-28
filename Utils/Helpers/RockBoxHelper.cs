@@ -86,7 +86,7 @@ namespace Y1_ingester
                 {
                     var tagFile = TagLib.File.Create(file);
 
-                    BitmapImage albumArt = null;
+                    BitmapImage? albumArt = null;
                     if (tagFile.Tag.Pictures.Length > 0)
                     {
                         using var ms = new MemoryStream(tagFile.Tag.Pictures[0].Data.Data);

@@ -45,9 +45,10 @@ namespace Y1_ingester.Utils.Services
 
             foreach (var remoteFile in remoteFiles)
             {
-                if (!localFileNames.Contains(remoteFile))
+                // Would be wierd if remoteFile is null, but just to be safe
+                if (!localFileNames.Contains(remoteFile!))
                 {
-                    string fullPath = Path.Combine(rockboxMusicPath, remoteFile);
+                    string fullPath = Path.Combine(rockboxMusicPath, remoteFile!);
                     try
                     {
                         File.Delete(fullPath);

@@ -133,7 +133,7 @@ namespace Y1_ingester.Utils
                         var parts = newFileName.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                         for (int i = 0; i < parts.Length; i++)
                         {
-                            parts[i] = SanitizeFileName(parts[i]);
+                            parts[i] = SanitizeFileName(parts[i]); 
                         }
                         newFileName = Path.Combine(parts);
 

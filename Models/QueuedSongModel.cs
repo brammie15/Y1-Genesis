@@ -10,11 +10,11 @@ namespace Y1_ingester.Models
     public partial class QueuedSongModel : ObservableObject
     {
         [ObservableProperty]
-        private string url;
+        private string url = String.Empty;
 
         //Filter for filename such as "1.[TITLE].ext"
         [ObservableProperty]
-        private string filter = "";
+        private string filter = String.Empty;
 
         [ObservableProperty]
         private string title = "Pending…";

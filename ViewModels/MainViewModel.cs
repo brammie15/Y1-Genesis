@@ -31,8 +31,8 @@ namespace Y1_ingester.ViewModels
 
         [ObservableProperty] private ObservableCollection<string> rockboxDrives = new();
         [ObservableProperty] private string selectedRockboxDrive = "None";
-        [ObservableProperty] private string urlText;
-        [ObservableProperty] private bool isRockBoxConnected;
+        [ObservableProperty] private string urlText = String.Empty;
+        [ObservableProperty] private bool isRockBoxConnected = false;
 
         public List<string> FilterOptions { get; } = new() { "All", "Only Local", "Only On Rockbox" };
 
