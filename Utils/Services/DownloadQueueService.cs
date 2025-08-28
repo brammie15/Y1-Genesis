@@ -49,6 +49,10 @@ namespace Y1_ingester.Utils
         }
         public async Task<PlaylistCheckResult> CheckForPlaylist(string url)
         {
+            if (!DownloaddHelper.CheckToolsDownloaded())
+            {
+                await DownloaddHelper.DownloadTools();
+            }
             var infoResult = await _ytdl.RunVideoDataFetch(url);
             if (!infoResult.Success)
             {

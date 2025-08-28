@@ -235,5 +235,31 @@ namespace Y1_ingester.ViewModels
             string url = "https://github.com/brammie15/Y1-Genesis/issues";
             Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
         }
+
+        [RelayCommand]
+        private void ChangeTheme(string themeName) {
+            Application.Current.Resources.MergedDictionaries.Clear();
+
+            if (themeName != "Default")
+            {
+                string themePath = themeName switch
+                {
+                    "Pink" => "/themes/Pinktheme.xaml",
+                    "Dark" => "/themes/DarkTheme.xaml",
+                };
+
+                if (themePath != null)
+                {
+                    try
+                    {
+                        var dict = new ResourceDictionary { Source = new Uri(themePath, UriKind.Relative) };
+                        Application.Current.Resources.MergedDictionaries.Add(dict);
+                    } catch
+                    {
+                        // euuuh
+                    }
+                }
+            }
+        }
     }
 }

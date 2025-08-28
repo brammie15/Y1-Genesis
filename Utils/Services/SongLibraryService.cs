@@ -56,7 +56,9 @@ namespace Y1_ingester.Utils.Services
                     };
 
                     songs.Add(song);
-                } catch { /* ignore bad files */ }
+                } catch {
+                    //ifnore bad files
+                }
             }
 
             return songs;

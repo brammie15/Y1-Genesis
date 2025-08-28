@@ -12,6 +12,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Themes\Images\bg_cute.jpg" />
+    <None Remove="Themes\Images\bg_tile.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="y1-logo.ico" />
   </ItemGroup>
 
@@ -20,6 +25,11 @@
     <PackageReference Include="taglib-sharp-netstandard2.0" Version="2.1.0" />
     <PackageReference Include="YoutubeDLSharp" Version="1.1.2" />
     <PackageReference Include="YouTubeMusicAPI" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Themes\Images\bg_cute.jpg" />
+    <Resource Include="Themes\Images\bg_tile.jpg" />
   </ItemGroup>
 
 </Project>

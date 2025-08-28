@@ -12,6 +12,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <!--<ResourceDictionary Source="/Themes/DarkTheme.xaml"/>-->
+                <!--<ResourceDictionary Source="/themes/Pinktheme.xaml"/>-->
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
@@ -19,121 +20,133 @@
     <Window.DataContext>
         <viewModels:MainViewModel />
     </Window.DataContext>
-    <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="_File">
-                <MenuItem Header="Settings" Command="{Binding OpenSettingsCommand}" />
-                <Separator/>
-                <MenuItem Header="Exit" Command="ApplicationCommands.Close"/>
-            </MenuItem>
 
-            <MenuItem Header="_Actions">
-                <MenuItem Header="Refresh" Command="{Binding RefreshSongsCommand}" />
-                <MenuItem Header="Rescan Devices" Command="{Binding RefreshDevicesCommand}" />
-                <MenuItem Header="Hard Sync" Command="{Binding HardSyncCommand}" />
-            </MenuItem>
+    <Grid>
+        <Rectangle Fill="{DynamicResource  BackgroundImageBrush}" />
+        <Rectangle Fill="{DynamicResource  BackgroundTintBrush}" />
 
-            <MenuItem Header="_Help">
-                <MenuItem Header="Help / Issues" Command="{Binding OpenIssuesCommand}" />
-                <MenuItem Header="About..." />
-            </MenuItem>
-        </Menu>
+        <DockPanel>
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="_File">
+                    <MenuItem Header="Settings" Command="{Binding OpenSettingsCommand}" />
+                    <Separator/>
+                    <MenuItem Header="Exit" Command="ApplicationCommands.Close"/>
+                </MenuItem>
 
-        <!-- Main Content Area -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*" />
-                <ColumnDefinition Width="2*" />
-            </Grid.ColumnDefinitions>
+                <MenuItem Header="_Actions">
+                    <MenuItem Header="Refresh" Command="{Binding RefreshSongsCommand}" />
+                    <MenuItem Header="Rescan Devices" Command="{Binding RefreshDevicesCommand}" />
+                    <MenuItem Header="Hard Sync" Command="{Binding HardSyncCommand}" />
+                </MenuItem>
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            
-            <StackPanel Orientation="Horizontal" Margin="10" DockPanel.Dock="Top" Grid.Row="1">
-                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                <ComboBox Width="150" ItemsSource="{Binding FilterOptions}" SelectedItem="{Binding SelectedFilter}" />
+                <MenuItem Header="_Help">
+                    <MenuItem Header="Help / Issues" Command="{Binding OpenIssuesCommand}" />
+                    <MenuItem Header="About..." />
+                </MenuItem>
 
-                <TextBlock Text="Sort by:" VerticalAlignment="Center" Margin="20,0,5,0"/>
-                <ComboBox Width="150" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSort}" />
-            </StackPanel>
+                <MenuItem Header="Theme">
+                    <MenuItem Header="Default" Command="{Binding ChangeThemeCommand}" CommandParameter="Default"/>
+                    <MenuItem Header="Pink" Command="{Binding ChangeThemeCommand}" CommandParameter="Pink"/>
+                    <MenuItem Header="Dark" Command="{Binding ChangeThemeCommand}" CommandParameter="Dark"/>
+                </MenuItem>
+            </Menu>
 
-            <!-- Left Side: Song List -->
-            <ScrollViewer Grid.Column="0">
-                <ItemsControl ItemsSource="{Binding SongsView}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="3" Padding="0" BorderThickness="2" CornerRadius="5" BorderBrush="{Binding BorderColor}">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Image Source="{Binding AlbumArt}" Width="120" Height="70" Margin="5"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
 
-                                    <StackPanel Margin="5" Width="300">
-                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" TextWrapping="WrapWithOverflow"/>
-                                        <TextBlock Text="{Binding Artist}" FontStyle="Italic" TextWrapping="WrapWithOverflow"/>
-                                        <TextBlock Text="{Binding Album}" TextWrapping="WrapWithOverflow"/>
-                                        <TextBlock Text="{Binding Year}"/>
-                                    </StackPanel>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                                    <Button Grid.Column="2"
-                                    Command="{Binding DataContext.DeleteSongCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    Width="32" Height="32"
-                                    Margin="10,0,0,0"
-                                    VerticalAlignment="Center"
-                                    ToolTip="Delete Song"
-                                    Background="Transparent"
-                                    BorderBrush="{x:Null}"
-                                    Padding="0">    
-                                        <TextBlock Text="🗑" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                    </Button>
+                <StackPanel Orientation="Horizontal" Margin="10" DockPanel.Dock="Top" Grid.Row="1">
+                    <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <ComboBox Width="150" ItemsSource="{Binding FilterOptions}" SelectedItem="{Binding SelectedFilter}" />
 
-                                    <Button Grid.Column="2"
-                                    Command="{Binding DataContext.EditSongCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    Width="32" Height="32"
-                                    Margin="0,0,10,0"
-                                    VerticalAlignment="Center"
-                                    ToolTip="Edit Song"
-                                    Background="Transparent"
-                                    BorderBrush="{x:Null}"
-                                    Padding="0">                    
-                                        <TextBlock Text="✏" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                    </Button>
+                    <TextBlock Text="Sort by:" VerticalAlignment="Center" Margin="20,0,5,0"/>
+                    <ComboBox Width="150" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSort}" />
+                </StackPanel>
+
+                <ScrollViewer Grid.Column="0">
+                    <ItemsControl ItemsSource="{Binding SongsView}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="3" Padding="0" BorderThickness="2" CornerRadius="5" BorderBrush="{Binding BorderColor}">
+                                    <Grid>
+                                        <Rectangle Fill="{DynamicResource SongTileBackground}" Stretch="Fill" Opacity="0.15"/>
+
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Image Source="{Binding AlbumArt}" Width="120" Height="70" Margin="5"/>
+
+                                            <StackPanel Margin="5" Width="300">
+                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" TextWrapping="WrapWithOverflow"/>
+                                                <TextBlock Text="{Binding Artist}" FontStyle="Italic" TextWrapping="WrapWithOverflow"/>
+                                                <TextBlock Text="{Binding Album}" TextWrapping="WrapWithOverflow"/>
+                                                <TextBlock Text="{Binding Year}"/>
+                                            </StackPanel>
+
+                                            <Button Grid.Column="2"
+                                            Command="{Binding DataContext.DeleteSongCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Width="32" Height="32"
+                                            Margin="10,0,0,0"
+                                            VerticalAlignment="Center"
+                                            ToolTip="Delete Song"
+                                            Background="Transparent"
+                                            BorderBrush="{x:Null}"
+                                            Padding="0">
+                                                <TextBlock Text="🗑" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{Binding ForegroundColor}"/>
+                                            </Button>
+
+                                            <Button Grid.Column="2"
+                                            Command="{Binding DataContext.EditSongCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Width="32" Height="32"
+                                            Margin="0,0,10,0"
+                                            VerticalAlignment="Center"
+                                            ToolTip="Edit Song"
+                                            Background="Transparent"
+                                            BorderBrush="{x:Null}"
+                                            Padding="0">
+                                                <TextBlock Text="✏" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{Binding ForegroundColor}"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <StackPanel Grid.Column="1" Margin="10" VerticalAlignment="Top">
+                    <TextBlock Text="Upload Options" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Select Drive:"/>
+                    <ComboBox Name="DriveSelector" ItemsSource="{Binding RockboxDrives}" SelectedValue="{Binding SelectedRockboxDrive}"/>
+
+                    <TextBlock Text="Upload Songs:" Margin="0,10,0,10"/>
+                    <Button Content="Upload To Device" Width="150" Margin="0,0,0,20" IsEnabled="{Binding IsRockBoxConnected}" Command="{Binding UploadSongsCommand}"/>
+
+                    <TextBlock Text="Add Song from URL:"/>
+                    <TextBox Name="UrlInput" Width="200" Margin="0,10,0,10" Text="{Binding UrlText, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <Button Content="Download and Add" Width="160" Margin="0,0,0,20" Command="{Binding DownloadUrlCommand}" CommandParameter="{Binding ElementName=UrlInput, Path=Text}"/>
+
+                    <ListBox ItemsSource="{Binding QueuedSongs}" Margin="0,10,0,0" MinHeight="20">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Title}" Width="200"/>
+                                    <TextBlock Text="{Binding Status}" Margin="10,0,0,0"/>
                                 </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-
-            <StackPanel Grid.Column="1" Margin="10" VerticalAlignment="Top">
-                <TextBlock Text="Upload Options" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
-
-                <TextBlock Text="Select Drive:"/>
-                <ComboBox Name="DriveSelector" Margin="0,0,0,0" ItemsSource="{Binding RockboxDrives}" SelectedValue="{Binding SelectedRockboxDrive}">
-                </ComboBox>
-
-                <TextBlock Text="Upload Songs:" Margin="0,10,0,10"/>
-                <Button Content="Upload To Device" Width="150" Margin="0,0,0,20" IsEnabled="{Binding IsRockBoxConnected}" Command="{Binding UploadSongsCommand}"/>
-
-                <TextBlock Text="Add Song from URL:"/>
-                <TextBox Name="UrlInput" Width="200" Margin="0,10,0,10" Text="{Binding UrlText, UpdateSourceTrigger=PropertyChanged}"/>
-                
-                <Button Content="Download and Add" Width="160" Margin="0,0,0,20" Command="{Binding DownloadUrlCommand}" CommandParameter="{Binding ElementName=UrlInput, Path=Text}"/>
-
-                <ListBox ItemsSource="{Binding QueuedSongs}" Margin="0,10,0,0" MinHeight="20">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Title}" Width="200"/>
-                                <TextBlock Text="{Binding Status}" Margin="10,0,0,0"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-
-            </StackPanel>
-        </Grid>
-    </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Grid>
+        </DockPanel>
+    </Grid>
 </Window>

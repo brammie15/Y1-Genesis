@@ -23,7 +23,9 @@ namespace Y1_ingester
                     {
                         return drive.RootDirectory.FullName;
                     }
-                } catch { /* skip drives we can't access */ }
+                } catch {
+                    //Skip non active drives
+                }
             }
             return null;
         }
