@@ -21,13 +21,13 @@ jobs:
           dotnet-version: '7.0.x'
 
       - name: Restore Packages
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+        run: dotnet restore ${{ env.PROJECT_PATH }} -r win-x64
 
       - name: Build Solution
         run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
 
       - name: Publish Solution
-        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --self-contained -r win-x64 -p:PublishSingleFile=true --no-build
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --self-contained -r win-x64 -p:PublishSingleFile=true --no-build -o ./publish
 
       - name: Zip Published Files
         run: Compress-Archive -Path ./publish/* -DestinationPath ./Y1-Genesis.zip
