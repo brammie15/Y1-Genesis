@@ -135,7 +135,16 @@
 
                     <Button Content="Download and Add" Width="160" Margin="0,0,0,20" Command="{Binding DownloadUrlCommand}" CommandParameter="{Binding ElementName=UrlInput, Path=Text}"/>
 
-                    <ListBox ItemsSource="{Binding QueuedSongs}" Margin="0,10,0,0" MinHeight="20">
+                    <TextBlock Text="Queued Songs:" FontWeight="Bold" Margin="0,20,0,5"/>
+                    <Button Content="Clear" Width="80" 
+                    Command="{Binding ClearQueuedSongsCommand}" 
+                    Margin="0,0,0,10"/>
+
+                            <ListBox ItemsSource="{Binding QueuedSongs}" 
+                     Margin="0,0,0,0" 
+                     MinHeight="50" 
+                     MaxHeight="200" 
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">       
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">

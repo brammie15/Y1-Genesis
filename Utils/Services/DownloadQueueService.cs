@@ -10,6 +10,11 @@ using TagLib.Ape;
 using Y1_ingester.Models;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
+
 
 namespace Y1_ingester.Utils
 {
@@ -118,7 +123,38 @@ namespace Y1_ingester.Utils
                     {
                         using var wc = new System.Net.WebClient();
                         var imageData = wc.DownloadData(info.Thumbnail);
-                        var pic = new Picture(new ByteVector(imageData));
+
+                        using var ms = new MemoryStream(imageData);
+                        using var loaded = Image.Load<Rgba32>(ms); // load original
+
+                        const int targetSize = 200;
+
+                        float scale = Math.Min((float)targetSize / loaded.Width, (float)targetSize / loaded.Height);
+                        int newWidth = Math.Max(1, (int)(loaded.Width * scale));
+                        int newHeight = Math.Max(1, (int)(loaded.Height * scale));
+
+                        loaded.Mutate(x => x.Resize(newWidth, newHeight));
+
+                        using var canvas = new Image<Rgba32>(targetSize, targetSize, new Rgba32(0, 0, 0));
+
+                        var offsetX = (targetSize - newWidth) / 2;
+                        var offsetY = (targetSize - newHeight) / 2;
+                        canvas.Mutate(ctx => ctx.DrawImage(loaded, new SixLabors.ImageSharp.Point(offsetX, offsetY), 1f));
+
+                        using var outStream = new MemoryStream();
+                        var encoder = new JpegEncoder
+                        {
+                            Quality = 90
+                        };
+                        canvas.Save(outStream, encoder);
+
+                        var pic = new Picture(new ByteVector(outStream.ToArray()))
+                        {
+                            Type = PictureType.FrontCover,
+                            Description = "Cover",
+                            MimeType = System.Net.Mime.MediaTypeNames.Image.Jpeg
+                        };
+
                         tagFile.Tag.Pictures = new IPicture[] { pic };
                     }
                     tagFile.Save();

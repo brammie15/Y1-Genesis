@@ -261,5 +261,19 @@ namespace Y1_ingester.ViewModels
                 }
             }
         }
+
+        [RelayCommand]
+        private void ClearQueuedSongs()
+        {
+            var toRemove = QueuedSongs
+                .Where(q => q.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase)
+                         || q.Status.Equals("Failed", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            foreach (var item in toRemove)
+            {
+                QueuedSongs.Remove(item);
+            }
+        }
     }
 }
